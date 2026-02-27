@@ -6,6 +6,10 @@ export default function Game() {
   const [hasStarted, setHasStarted] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
+  // --- NEW: Difficulty & Target States ---
+  const [difficulty, setDifficulty] = useState("Normal");
+  const [targetQuality, setTargetQuality] = useState(150);
+
   // --- GAME STATE ---
   const [day, setDay] = useState(1);
   const [energy, setEnergy] = useState(3);
@@ -15,9 +19,7 @@ export default function Game() {
   const [similarity, setSimilarity] = useState(0);
 
   const [logs, setLogs] = useState([
-    "> Dr. Keno expects a flawless build.",
-    "> Final Project Assigned.",
-    "> System Initialized."
+    "> System Standby."
   ]);
 
   const [isGameOver, setIsGameOver] = useState(false);
@@ -25,6 +27,24 @@ export default function Game() {
 
   const addLog = (message: string) => {
     setLogs((prevLogs) => [message, ...prevLogs].slice(0, 6)); 
+  };
+
+  // --- NEW: Start Game Logic ---
+  const startGame = (diffName: string, targetNum: number) => {
+    setDifficulty(diffName);
+    setTargetQuality(targetNum);
+    
+    // Reset all stats for a fresh run
+    setDay(1); setEnergy(3); setCodeQuality(0); setSanity(100); setCaffeine(0); setSimilarity(0);
+    setIsGameOver(false);
+    
+    setLogs([
+      "> Dr. Keno expects a flawless build.",
+      `> ${diffName} Protocol Engaged. Target: ${targetNum}.`,
+      "> System Initialized."
+    ]);
+    
+    setHasStarted(true);
   };
 
   useEffect(() => {
@@ -36,13 +56,14 @@ export default function Game() {
       setEndMessage("Burnout achieved. You stared at a missing semicolon for 6 hours and lost your mind.");
     } else if (day > 14) {
       setIsGameOver(true);
-      if (codeQuality >= 150) {
-        setEndMessage(`Victory! You submitted a stellar project. Dr. Keno gave you an A.`);
+      // UPDATED: Dynamic win condition based on selected difficulty
+      if (codeQuality >= targetQuality) {
+        setEndMessage(`Victory! You survived ${difficulty} mode. Dr. Keno actually smiled.`);
       } else {
-        setEndMessage("Deadline passed. Your code barely compiled. Prepare for the retake.");
+        setEndMessage(`Deadline passed. You needed ${targetQuality} quality, but only had ${codeQuality}. Prepare for the retake.`);
       }
     }
-  }, [sanity, day, codeQuality, similarity]);
+  }, [sanity, day, codeQuality, similarity, targetQuality, difficulty]);
 
   // --- LOGIC: Action Functions ---
   const writeCode = () => {
@@ -112,10 +133,9 @@ export default function Game() {
     addLog(`> Day ${day} concluded. Passed out. Edited some AI code while half-asleep.`);
   };
 
+  // UPDATED: Restarting now sends you back to the main menu to pick a difficulty
   const restartGame = () => {
-    setDay(1); setEnergy(3); setCodeQuality(0); setSanity(100); setCaffeine(0); setSimilarity(0);
-    setIsGameOver(false);
-    setLogs(["> System Initialized.", "> Ready to try again."]);
+    setHasStarted(false);
   };
 
   // --- RENDER ---
@@ -123,24 +143,44 @@ export default function Game() {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-mono">
         
-        {/* Main Start Screen Content */}
-        <div className="flex flex-col items-center justify-center flex-grow">
-          <h1 className="text-5xl font-bold text-blue-500 mb-8 tracking-widest drop-shadow-lg">CS SURVIVAL SIM</h1>
-          <p className="text-slate-400 mb-12 max-w-md text-center">Manage your energy. Write clean code. Do not lose your sanity.</p>
-          <button 
-            onClick={() => setHasStarted(true)}
-            className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:scale-105 border border-blue-400"
-          >
-            INITIALIZE SYSTEM
-          </button>
+        <div className="flex flex-col items-center justify-center flex-grow p-4">
+          <h1 className="text-5xl md:text-6xl font-bold text-blue-500 mb-6 tracking-widest drop-shadow-lg text-center">CS SURVIVAL SIM</h1>
+          <p className="text-slate-400 mb-12 max-w-md text-center">Manage your energy. Write clean code. DO NOT LOSE YOUR SANITY.</p>
+          
+          {/* NEW: Difficulty Selection Buttons */}
+          <div className="flex flex-col md:flex-row gap-6 w-full max-w-2xl justify-center">
+            
+            <button 
+              onClick={() => startGame("Casual", 100)}
+              className="flex-1 px-6 py-6 bg-slate-900 hover:bg-green-900/50 text-white font-bold rounded-lg border border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.1)] transition-all hover:scale-105 hover:border-green-400 flex flex-col items-center group"
+            >
+              <span className="text-xl mb-1 group-hover:text-green-400">Casual</span>
+              <span className="text-xs text-slate-400 font-normal">Target: 100 Quality</span>
+            </button>
+
+            <button 
+              onClick={() => startGame("Normal", 150)}
+              className="flex-1 px-6 py-6 bg-slate-900 hover:bg-blue-900/50 text-white font-bold rounded-lg border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all hover:scale-105 hover:border-blue-400 flex flex-col items-center group"
+            >
+              <span className="text-xl mb-1 group-hover:text-blue-400">Normal</span>
+              <span className="text-xs text-slate-400 font-normal">Target: 150 Quality</span>
+            </button>
+
+            <button 
+              onClick={() => startGame("Chaos", 300)}
+              className="flex-1 px-6 py-6 bg-slate-900 hover:bg-red-900/50 text-white font-bold rounded-lg border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)] transition-all hover:scale-105 hover:border-red-400 flex flex-col items-center group relative overflow-hidden"
+            >
+              <span className="text-xl mb-1 group-hover:text-red-400 relative z-10">Chaos</span>
+              <span className="text-xs text-slate-400 font-normal relative z-10">Target: 300 Quality</span>
+            </button>
+
+          </div>
         </div>
 
-        {/* NEW: Start Screen Footer */}
         <div className="pb-8 flex flex-col items-center space-y-3 opacity-60 hover:opacity-100 transition-opacity">
           <p className="text-slate-500 text-sm tracking-wide">Made by Francis Enakeno</p>
           <div className="flex items-center justify-center text-slate-500 text-xs">
             <span>Road to</span>
-            {/* Logo size increased to h-10 */}
             <img src="/tc-logo.png" alt="Team Chaos Logo" className="h-20 ml-3" />
           </div>
         </div>
@@ -157,9 +197,9 @@ export default function Game() {
           <div className="bg-slate-900 border border-slate-700 p-8 rounded-lg max-w-lg shadow-2xl relative w-full">
             <h2 className="text-2xl font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">How to Survive</h2>
             <div className="space-y-4 text-slate-300 text-sm leading-relaxed">
-              <p><strong className="text-white">The Goal:</strong> Survive 14 days and reach at least <strong className="text-green-400">150 Code Quality</strong> before the final deadline to pass.</p>
+              <p><strong className="text-white">The Goal:</strong> Survive 14 days and reach at least <strong className="text-green-400">{targetQuality} Code Quality</strong> before the deadline.</p>
               <p><strong className="text-purple-400">Sanity:</strong> Writing and debugging drains your mind. If this hits 0%, you burn out and fail immediately.</p>
-              <p><strong className="text-red-400">Turnitin (Similarity):</strong> Using ChatGPT gives massive code boosts for zero energy, but if your similarity score exceeds 30%, Dr. Keno will expel you. Sleep to slightly reduce this score.</p>
+              <p><strong className="text-red-400">Turnitin (Similarity):</strong> Using ChatGPT gives massive code boosts for zero energy, but if your similarity score exceeds 30%, you will be expelled. Sleep to slightly reduce this score.</p>
               <p><strong className="text-orange-400">Energy:</strong> You have 3 actions per day. Sleep to reset, or chug coffee for temporary energy (at the cost of your sanity).</p>
             </div>
             <button 
@@ -182,7 +222,11 @@ export default function Game() {
               <h1 className="text-3xl font-bold text-blue-400 flex items-center gap-3">
                 Day {day} / 14
               </h1>
-              <p className="text-slate-400 mt-1">Energy: <span className="text-white font-bold">{energy}</span></p>
+              <div className="flex gap-4 mt-1 text-sm">
+                <p className="text-slate-400">Energy: <span className="text-white font-bold">{energy}</span></p>
+                <p className="text-slate-400">Mode: <span className={difficulty === 'Chaos' ? 'text-red-400 font-bold' : difficulty === 'Normal' ? 'text-blue-400 font-bold' : 'text-green-400 font-bold'}>{difficulty}</span></p>
+                <p className="text-slate-400">Goal: <span className="text-white font-bold">{targetQuality}</span></p>
+              </div>
             </div>
             <button 
               onClick={() => setShowHelp(true)}
@@ -196,7 +240,7 @@ export default function Game() {
           <div className="flex gap-4 text-sm bg-slate-900 p-4 rounded-lg border border-slate-800 shadow-md">
             <div className="flex flex-col items-center w-24">
               <span className="text-slate-400 uppercase tracking-wider text-xs mb-1">Code Quality</span>
-              <span className="text-2xl font-bold text-green-400">{codeQuality}</span>
+              <span className={`text-2xl font-bold ${codeQuality >= targetQuality ? 'text-green-400 animate-pulse' : 'text-green-500'}`}>{codeQuality}</span>
             </div>
             <div className="flex flex-col items-center w-24">
               <span className="text-slate-400 uppercase tracking-wider text-xs mb-1">Sanity</span>
@@ -222,7 +266,7 @@ export default function Game() {
               onClick={restartGame}
               className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded shadow-lg transition-transform hover:scale-105"
             >
-              Initialize New Run
+              Return to Main Menu
             </button>
           </div>
         ) : (
@@ -297,7 +341,6 @@ export default function Game() {
           <p className="text-slate-600 text-sm tracking-wide">Made by Francis Enakeno</p>
           <div className="flex items-center justify-center text-slate-500 text-xs">
             <span>Road to</span>
-            {/* Logo size increased to h-10 */}
             <img src="/tc-logo.png" alt="Team Chaos Logo" className="h-20 ml-3 opacity-60 hover:opacity-100 transition-opacity" />
           </div>
         </footer>
